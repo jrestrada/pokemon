@@ -95,9 +95,10 @@ pokemon_dict = {'Charmander': 'FIRE', 'Bulbasaur': 'GRASS', 'Squirtle': 'WATER',
 for trainer in all_trainers:
     trainer.selectTeam(pokemon_dict)
     trainer.createPokemonObjects()
-
-for pokemon in trainer1.pokemonObjects:
-    pokemon.addAttacks(attack_types)
+    
+    #Add attacks to each of the trainer's pokemons.
+    for pokemon in trainer.pokemonObjects:
+        pokemon.addAttacks(attack_types)
     
 for i in range(0,6):
     print(trainer1.pokemonObjects[i].attacks[2].name)
