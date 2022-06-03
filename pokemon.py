@@ -18,9 +18,13 @@ class Pokemon:
             self.is_knocked_out = True
             print(f"{self.name} is knocked out.")
     
-    def addAttacks(self,attacks):
-        self.type = attacks
-        
+    #Add 4 attacks to a pokemon. 2 attacks of type "NORMAL" and 2 attacks of its own type.
+    def addAttacks(self,dict):
+        self.attacks.append(random.choice(dict["NORMAL"]))
+        self.attacks.append(random.choice(dict["NORMAL"]))
+        self.attacks.append(random.choice(dict[self.type]))
+        self.attacks.append(random.choice(dict[self.type]))
+             
 class Trainer:
     def __init__(self, name):
         self.name = name
@@ -28,13 +32,11 @@ class Trainer:
         self.pokemonObjects = []
         self.current_pokemon = 0 
 
-    def selectTeam(self, all_poks):
-        team = {}
-        for i in range(0, 6):
-            pok_names, pok_types = random.choice(list(all_poks.items()))
-            team[pok_names] = pok_types
-        self.pokemons = team
-    
+    def selectTeam(self, d):
+        keys = random.sample(list(d), 6)
+        values = [d[k] for k in keys]
+        self.pokemons = dict(zip(keys, values))
+       
     def createPokemonObjects(self):
         team = []
         for names, types in self.pokemons.items():
@@ -47,8 +49,20 @@ class Attack:
         self.type = type
         self.power = power
 
-#All pokemons available.
-pokemon_dict = {'Charmander': 'FIRE', 'Bulbasaur': 'GRASS', 'Squirtle': 'WATER', 'Pikachu': 'ELECTRIC', 'Geodude': 'ROCK', 'Pidgey': 'FLYING'}
+#Function to iterate through all instances of a class.
+def get_all_instances(of_class):
+    _instances = []
+    for obj in gc.get_objects():
+        if isinstance(obj,of_class):
+            _instances.append(obj)
+    return _instances
+
+#Instantiation of trainers.
+trainer1 = Trainer("Brock")
+trainer2 = Trainer("Misty")
+trainer3 = Trainer("Team Rocket's James")
+trainer4 = Trainer("Team Rocket's Jessie")
+all_trainers = get_all_instances(Trainer) 
 
 #Instantiation of attacks.
 scratch = Attack("Scratch", "NORMAL", 40)
@@ -63,32 +77,29 @@ rock_blast = Attack("Rock Blast", "ROCK", 25)
 double_edge = Attack("Double Edge", "ROCK", 120)
 flame_thrower = Attack("Flame Thrower", "FIRE", 90)
 inferno = Attack("Inferno", "FIRE", 100)
-
-#Instantiation of trainers.
-trainer1 = Trainer("Brock")
-trainer2 = Trainer("Misty")
-trainer3 = Trainer("Team Rocket's James")
-trainer4 = Trainer("Team Rocket's Jessie")
-
-#Function to iterate through all instances of a class.
-def get_all_instances(of_class):
-    _instances = []
-    for obj in gc.get_objects():
-        if isinstance(obj,of_class):
-            _instances.append(obj)
-    return _instances
+fly = Attack("Fly", "FLYING", 90)
+aereal_ace = Attack("Aereal Ace", "FLYING", 60)
+surf = Attack("Surf", "WATER", 90)
+waterfall = Attack("Water Fall", "WATER", 80)
 all_attacks = get_all_instances(Attack)
-all_trainers = get_all_instances(Trainer) 
+
+#Group attacks of the same type into attack_types dictionary.
+attack_types = {"FIRE": [], "NORMAL": [], "GRASS": [], "ELECTRIC": [], "ROCK": [], "FLYING": [], "WATER": []}
+for attack in all_attacks:
+    attack_types[attack.type] += [attack]
+
+#All pokemons available.
+pokemon_dict = {'Charmander': 'FIRE', 'Bulbasaur': 'GRASS', 'Squirtle': 'WATER', 'Pikachu': 'ELECTRIC', 'Geodude': 'ROCK', 'Pidgey': 'FLYING'}
 
 #Add 6 random Pokemons to all trainers.
 for trainer in all_trainers:
     trainer.selectTeam(pokemon_dict)
     trainer.createPokemonObjects()
 
-    #Add attacks to pokemons.
-    for i in range(0,6):
-        trainer.pokemonObjects[i]
-
-print(trainer3.pokemonObjects[0].type)
+for pokemon in trainer1.pokemonObjects:
+    pokemon.addAttacks(attack_types)
+    
+for i in range(0,6):
+    print(trainer1.pokemonObjects[i].attacks[2].name)
 
 
