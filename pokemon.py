@@ -5,6 +5,9 @@ class Pokemon:
     def __init__(self, name, type):
         self.name = name
         self.type = type
+        self.attack = 50
+        self.defence = 50
+        self.level = 5
         self.attacks = []
         self.health = 120 #or its level * 5
         self.max_health = 120 # or its level * 5
@@ -28,21 +31,19 @@ class Pokemon:
 class Trainer:
     def __init__(self, name):
         self.name = name
-        self.pokemons = {}
-        self.pokemonObjects = []
+        self.pokemons = []
         self.current_pokemon = 0 
 
     def selectTeam(self, d):
         keys = random.sample(list(d), 6)
         values = [d[k] for k in keys]
-        self.pokemons = dict(zip(keys, values))
-       
-    def createPokemonObjects(self):
-        team = []
-        for names, types in self.pokemons.items():
-            team.append(Pokemon(names, types))
-        self.pokemonObjects = team
-            
+        sample = dict(zip(keys, values))
+
+        _team = []
+        for names, types in sample.items():
+            _team.append(Pokemon(names, types))
+        self.pokemons = _team
+         
 class Attack:
     def __init__(self, name, type, power):
         self.name = name
@@ -84,9 +85,12 @@ waterfall = Attack("Water Fall", "WATER", 80)
 all_attacks = get_all_instances(Attack)
 
 #Group attacks of the same type into attack_types dictionary.
-attack_types = {"FIRE": [], "NORMAL": [], "GRASS": [], "ELECTRIC": [], "ROCK": [], "FLYING": [], "WATER": []}
-for attack in all_attacks:
-    attack_types[attack.type] += [attack]
+attack_dict = {}
+for i in range(0,len(all_attacks)):
+    if all_attacks[i].type not in attack_dict:
+        attack_dict[all_attacks[i].type] = [all_attacks[i]]
+    else:
+        attack_dict[all_attacks[i].type] += [all_attacks[i]]
 
 #All pokemons available.
 pokemon_dict = {'Charmander': 'FIRE', 'Bulbasaur': 'GRASS', 'Squirtle': 'WATER', 'Pikachu': 'ELECTRIC', 'Geodude': 'ROCK', 'Pidgey': 'FLYING'}
@@ -94,13 +98,26 @@ pokemon_dict = {'Charmander': 'FIRE', 'Bulbasaur': 'GRASS', 'Squirtle': 'WATER',
 #Add 6 random Pokemons to all trainers.
 for trainer in all_trainers:
     trainer.selectTeam(pokemon_dict)
-    trainer.createPokemonObjects()
     
     #Add attacks to each of the trainer's pokemons.
-    for pokemon in trainer.pokemonObjects:
-        pokemon.addAttacks(attack_types)
+    for pokemon in trainer.pokemons:
+        pokemon.addAttacks(attack_dict)
     
-for i in range(0,6):
-    print(trainer1.pokemonObjects[i].attacks[2].name)
+def printPokedexes():
+    for i in range(0,len(all_trainers)):
+        print("{name}s Pokedex:".format(name = all_trainers[i].name))
+        
+        for j in range(0,len(all_trainers[i].pokemons)):
+            print("--{pokName}--".format(pokName = all_trainers[i].pokemons[j].name))
+            print("Health = {health}".format(health = all_trainers[i].pokemons[j].health))
+            
+            for k in range(0,len(all_trainers[i].pokemons[j].attacks)):
+                print(" -{attName}: {attType}, {attPower}".format(attName = all_trainers[i].pokemons[j].attacks[k].name, attType = all_trainers[i].pokemons[j].attacks[k].type, attPower = all_trainers[i].pokemons[j].attacks[k].power))
+            print("\n")    
 
+def damage(pokemon):
+    total = ((2/5 * pokemon.level + 2) * pokemon.attacks[3].power * pokemon.attack/pokemon.defence) / 50 + 2
+    print(pokemon.attacks[3].power)
+    return total
 
+print(damage(all_trainers[0].pokemons[0]))
