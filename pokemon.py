@@ -1,5 +1,6 @@
 import gc
 import random
+import typechart as tc
 
 class Pokemon:
     def __init__(self, name, type):
@@ -119,5 +120,11 @@ def damage(pokemon):
     total = ((2/5 * pokemon.level + 2) * pokemon.attacks[3].power * pokemon.attack/pokemon.defence) / 50 + 2
     print(pokemon.attacks[3].power)
     return total
+
+def typeDamageCalc(attackType = "NORMAL", defendingPkmType = "NORMAL"):
+    return tc.typechart[tc.typeindices.index(attackType)][tc.typeindices.index(defendingPkmType)]
+
+print("Fire attack on grass Pkm causes x", typeDamageCalc("FIRE","GRASS"), "damage" )
+print("Fire attack on water Pkmcauses x", typeDamageCalc("FIRE","WATER"), "damage" )
 
 print(damage(all_trainers[0].pokemons[0]))
