@@ -1,6 +1,7 @@
 import gc
 import random
 import typechart as tc
+import numpy as np  
 
 class Pokemon:
     def __init__(self, name, type):
@@ -33,7 +34,6 @@ class Trainer:
     def __init__(self, name):
         self.name = name
         self.pokemons = []
-        self.current_pokemon = 0 
 
     def selectTeam(self, d):
         keys = random.sample(list(d), 6)
@@ -51,6 +51,38 @@ class Attack:
         self.type = type
         self.power = power
 
+class PokemonGame:
+    def __init__(self, trainers):
+        self.player1 = trainers[0]
+        self.trainers = trainers
+        self.player2 = None
+        self.p1_pokedex = self.player1.pokemons
+        self.p2_pokedex = self.player2.pokemons
+        self.p1_pokemon = None
+        self.p2_pokemon = None
+        self.turns = 0
+
+    def which_turn(self):
+        players = [self.player1, self.player2]
+        return players[self.turns % 2]
+
+    #Print player 1 and player 2's Name, current pokemon, and their hp
+    def printBattleStatus(self):
+        print("-"*70)
+        print(self.player2.name + "'s " + self.p2_pokemon.name)
+        print("HP: {hp}".format(hp = round((self.p2_pokemon.health/self.p2_pokemon.max_health) * 100)))
+        print("\n")
+        print(self.player1.name + "'" + self.p1_pokemon.name)
+        print("HP: {hp}".format(hp = round((self.p1_pokemon.health/self.p1_pokemon.max_health) * 100)))
+        attacks =["("+str(i+1)+") " + self.p1_pokemon.attacks[i].name for i in range(4)]
+        print("-"*60)
+        print("Fight! Select your next attack, type a number from 1 - 4:")
+        print(attacks)
+        print("-"*70)
+        selection = int(input())
+        print("\n")
+        return selection - 1
+                    
 #Function to iterate through all instances of a class.
 def get_all_instances(of_class):
     _instances = []
@@ -60,6 +92,7 @@ def get_all_instances(of_class):
     return _instances
 
 #Instantiation of trainers.
+player1 = Trainer("Ash")
 trainer1 = Trainer("Brock")
 trainer2 = Trainer("Misty")
 trainer3 = Trainer("Team Rocket's James")
@@ -103,7 +136,8 @@ for trainer in all_trainers:
     #Add attacks to each of the trainer's pokemons.
     for pokemon in trainer.pokemons:
         pokemon.addAttacks(attack_dict)
-    
+
+#Function to print   
 def printPokedexes():
     for i in range(0,len(all_trainers)):
         print("{name}s Pokedex:".format(name = all_trainers[i].name))
@@ -116,15 +150,36 @@ def printPokedexes():
                 print(" -{attName}: {attType}, {attPower}".format(attName = all_trainers[i].pokemons[j].attacks[k].name, attType = all_trainers[i].pokemons[j].attacks[k].type, attPower = all_trainers[i].pokemons[j].attacks[k].power))
             print("\n")    
 
-def damage(pokemon):
-    total = ((2/5 * pokemon.level + 2) * pokemon.attacks[3].power * pokemon.attack/pokemon.defence) / 50 + 2
-    print(pokemon.attacks[3].power)
-    return total
-
+#Returns efficacy of an attack
 def typeDamageCalc(attackType = "NORMAL", defendingPkmType = "NORMAL"):
     return tc.typechart[tc.typeindices.index(attackType)][tc.typeindices.index(defendingPkmType)]
 
-print("Fire attack on grass Pkm causes x", typeDamageCalc("FIRE","GRASS"), "damage" )
-print("Fire attack on water Pkmcauses x", typeDamageCalc("FIRE","WATER"), "damage" )
+#Returns the total damage an attack inflicts.
+def damage(attackingPkm, defendingPkm, attackIndex):
+    total = (((2/5 * attackingPkm.level + 2) * attackingPkm.attacks[attackIndex].power * attackingPkm.attack/attackingPkm.defence) / 50 + 2)
+    #total = total * typeDamageCalc(attackingPkm.attack[attackIndex].type), (defendingPkm.type)
+    return total
+       
+def playGame():
+    game = PokemonGame(all_trainers)
+    
+    gameOver = False
+    while gameOver == False:
+        
+        game.player2 = game.trainers[1]
+        game.p1_pokemon = game.p1_pokedex[0]
+        game.p2_pokemon = game.p2_pokedex[0]
 
-print(damage(all_trainers[0].pokemons[0]))
+        selection = game.printBattleStatus()
+        game.p2_pokemon.decreaseHealth(damage(game.p1_pokemon, game.p2_pokemon, selection))
+    
+        if game.p2_pokemon.health == 0:
+            game.p2_pokedex.pop(0)
+        
+        if game.p2_pokedex == []:
+            game.trainers.pop(1)
+
+        if game.player2 == game.player1:
+            gameOver = True
+
+playGame()
