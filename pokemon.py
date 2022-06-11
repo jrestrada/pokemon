@@ -37,11 +37,10 @@ class Trainer:
         self.name = name
         self.team = []
 
-    def selectTeam(self, d):
-        keys = random.sample(list(d), 6)
+    def selectTeam(self, d, n):
+        keys = random.sample(list(d), n)
         values = [d[k] for k in keys]
         sample = dict(zip(keys, values))
-
         _team = []
         for names, types in sample.items():
             _team.append(Pokemon(names, types))
@@ -49,49 +48,52 @@ class Trainer:
          
 class PokemonGame:
     def __init__(self, trainers):
-        self.player1 = trainers[0]
+        self.player = trainers[0]
         self.rivals = trainers[1:]
-        self.player2 = trainers[1]
-        self.p1_pokedex = self.player1.team
-        self.p2_pokedex = self.player2.team
-        self.p1_pokemon = None
-        self.p2_pokemon = None
+        self.rival = self.rivals[0]
+        # self.p1_team = self.player.team   these lines are redundant. game already has player. player already has team. game can always access player.team
+        # self.p2_team = self.rival.team   these lines are redundant. game already has player. player already has team. game can always access player.team
+        self.player_pkm = None
+        self.rival_pkm = None
         self.turns = 0
 
     def which_turn(self):
-        players = [self.player1, self.player2]
+        players = [self.player, self.rival]
         return players[self.turns % 2]
+
+    # Obtains and returns user selection for player attack and a random selection for Rival Attack
+    def selectAttacks(attack = "this key var is just here to fix a bug"):
+        validselections = [1,2,3,4]
+        rivalSelection = random.sample(validselections, 1)
+        attackSelected = False
+        while attackSelected == False:
+            try:
+                playerSelection = int(input())
+            except ValueError:
+                print("Invalid option! Select again")
+                continue
+            if playerSelection in validselections:    
+                attackSelected == True
+                break
+            else:
+                print("Invalid option! Select again")
+        return playerSelection - 1 , rivalSelection[0] - 1
 
     #Print player 1 and player 2's Name, current pokemon, and their hp
     def printBattleStatus(self):
         print("-"*70)
-        print(self.player2.name + "'s " + self.p2_pokemon.name)
-        print("HP: {hp}".format(hp = round((self.p2_pokemon.health/self.p2_pokemon.max_health) * 100)))
+        print(self.rival.name + "'s " + self.rival_pkm.name)
+        print("HP: {hp}".format(hp = round((self.rival_pkm.health/self.rival_pkm.max_health) * 100)))
         print("\n")
-        print(self.player1.name + "'" + self.p1_pokemon.name)
-        print("HP: {hp}".format(hp = round((self.p1_pokemon.health/self.p1_pokemon.max_health) * 100)))
-        attacks =["("+str(i+1)+") " + self.p1_pokemon.attacks[i].name for i in range(4)]
+        print(self.player.name + "'" + self.player_pkm.name)
+        print("HP: {hp}".format(hp = round((self.player_pkm.health/self.player_pkm.max_health) * 100)))
+        attacks =["("+str(i+1)+") " + self.player_pkm.attacks[i].name for i in range(4)]
         print("-"*60)
         print("Fight! Select your next attack, type a number from 1 - 4:")
         print(attacks)
         print("-"*70)
         print("\n")
 
-    def selectAttack(attack = "this key var is just here to fix a bug"):
-        validselections = [1,2,3,4]
-        attackSelected = False
-        while attackSelected == False:
-            try:
-                selection = int(input())
-            except ValueError:
-                print("Invalid option! Select again")
-                continue
-            if selection in validselections:    
-                attackSelected == True
-                break
-            else:
-                print("Invalid option! Select again")
-        return selection - 1
 
 #Function to iterate through all instances of a class.
 def get_all_instances(of_class):
@@ -120,9 +122,9 @@ for i in range(0,len(all_attacks)):
     else:
         attack_dict[all_attacks[i].type] += [all_attacks[i]]
 
-#Add 6 random pokemon to all trainers.
+#Add n random pokemon to all trainers.
 for trainer in all_trainers:
-    trainer.selectTeam(db.pokemon_dict)
+    trainer.selectTeam(db.pokemon_dict, 1)
     
     #Add attacks to each of the trainer's pokemon.
     for pokemon in trainer.team:
@@ -142,36 +144,58 @@ def printPokedexes():
             print("\n")    
 
 #Returns efficacy of an attack
-def typeDamageCalc(attackType = "NORMAL", defendingPkmType = "NORMAL"):
+def typeDamageMultiplier(attackType = "NORMAL", defendingPkmType = "NORMAL"):
     return db.typechart[db.typeindices.index(attackType)][db.typeindices.index(defendingPkmType)]
+
+def stabDamageMultiplier(attackType = "NORMAL", attackingPkmType = "NORMAL"):
+    if attackType == attackingPkmType:
+        return 2
+    else:
+        return 1
 
 #Returns the total damage an attack inflicts.
 def damage(attackingPkm, defendingPkm, attackIndex):
-    total = (((2/5 * attackingPkm.level + 2) * attackingPkm.attacks[attackIndex].power * attackingPkm.attack/attackingPkm.defence) / 50 + 2)
-    #total = total * typeDamageCalc(attackingPkm.attack[attackIndex].type), (defendingPkm.type)
-    return total
+    baseDamage = (((2/5 * attackingPkm.level + 2) * attackingPkm.attacks[attackIndex].power * attackingPkm.attack/attackingPkm.defence) / 50 + 2)
+    stabDamage = stabDamageMultiplier(attackingPkm.attacks[attackIndex].type, attackingPkm.type)
+    typeDamage = typeDamageMultiplier(attackingPkm.attacks[attackIndex].type, defendingPkm.type)
+    if typeDamage == 2:
+        print("It's super effective")
+    elif typeDamage == 0.5:
+        print("It's not very effective")
+    elif typeDamage == 0:
+        print("It had no effect")
+    totalDamage = baseDamage * stabDamage * typeDamage 
+    return totalDamage
        
 def playGame():
     game = PokemonGame(all_trainers)
     gameOver = False
 
     while gameOver == False:
-        game.player2 = game.rivals[0]
-        game.p1_pokemon = game.p1_pokedex[0]
-        game.p2_pokemon = game.p2_pokedex[0]
+        game.rival = game.rivals[0]
+        game.player_pkm = game.player.team[0]
+        game.rival_pkm = game.rival.team[0]
 
         game.printBattleStatus()
-        selection = game.selectAttack()
-        game.p2_pokemon.decreaseHealth(damage(game.p1_pokemon, game.p2_pokemon, selection))
-    
-        if game.p2_pokemon.health == 0:
-            game.p2_pokedex.pop(0)
-        
-        if game.p2_pokedex == []:
+        playerAttackNum, rivalAttackNum = game.selectAttacks()
+        game.rival_pkm.decreaseHealth(damage(game.player_pkm, game.rival_pkm, playerAttackNum))
+        # game.player_pkm.decreaseHealth(damage(game.game.rival_pkm,game.player_pkm, rivalAttackNum)) # removed for now, player would lose too fast
+
+        if game.rival_pkm.health == 0:
+            game.rival.team.pop(0)    
+
+        if not game.rival.team:
             game.rivals.pop(0)
 
-        if game.player2 == game.player1:
-            gameOver = True
+        if not game.player.team:
+            print("You are out of Pokemon")
+            gameover = True
+
+        if not game.rivals:
+            print("You won!!!")
+            gameOver = True            
+            
+    print("Game Over! exiting game...")
 
 
 def main():
