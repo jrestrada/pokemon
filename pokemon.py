@@ -37,10 +37,11 @@ class Trainer:
         self.name = name
         self.team = []
 
-    def selectTeam(self, d, n):
-        keys = random.sample(list(d), n)
-        values = [d[k] for k in keys]
-        sample = dict(zip(keys, values))
+    def selectTeam(self, pokedex, n):
+        pkm_IDs = random.sample(list(pokedex), n)
+        values = [pokedex[pkm_ID] for pkm_ID in pkm_IDs]
+        sample = dict(zip(pkm_IDs, values))
+        
         _team = []
         for names, types in sample.items():
             _team.append(Pokemon(names, types))
@@ -51,8 +52,6 @@ class PokemonGame:
         self.player = trainers[0]
         self.rivals = trainers[1:]
         self.rival = self.rivals[0]
-        # self.p1_team = self.player.team   these lines are redundant. game already has player. player already has team. game can always access player.team
-        # self.p2_team = self.rival.team   these lines are redundant. game already has player. player already has team. game can always access player.team
         self.player_pkm = None
         self.rival_pkm = None
         self.turns = 0
@@ -62,7 +61,7 @@ class PokemonGame:
         return players[self.turns % 2]
 
     # Obtains and returns user selection for player attack and a random selection for Rival Attack
-    def selectAttacks(attack = "this key var is just here to fix a bug"):
+    def selectAttacks(self):
         validselections = [1,2,3,4]
         rivalSelection = random.sample(validselections, 1)
         attackSelected = False
@@ -79,13 +78,16 @@ class PokemonGame:
                 print("Invalid option! Select again")
         return playerSelection - 1 , rivalSelection[0] - 1
 
+    def battle(self):
+        return 0
+
     #Print player 1 and player 2's Name, current pokemon, and their hp
     def printBattleStatus(self):
         print("-"*70)
         print(self.rival.name + "'s " + self.rival_pkm.name)
         print("HP: {hp}".format(hp = round((self.rival_pkm.health/self.rival_pkm.max_health) * 100)))
         print("\n")
-        print(self.player.name + "'" + self.player_pkm.name)
+        print(self.player.name + "'s " + self.player_pkm.name)
         print("HP: {hp}".format(hp = round((self.player_pkm.health/self.player_pkm.max_health) * 100)))
         attacks =["("+str(i+1)+") " + self.player_pkm.attacks[i].name for i in range(4)]
         print("-"*60)
@@ -180,6 +182,7 @@ def playGame():
         playerAttackNum, rivalAttackNum = game.selectAttacks()
         game.rival_pkm.decreaseHealth(damage(game.player_pkm, game.rival_pkm, playerAttackNum))
         # game.player_pkm.decreaseHealth(damage(game.game.rival_pkm,game.player_pkm, rivalAttackNum)) # removed for now, player would lose too fast
+        # game.player_pkm.attacks[playerAttackNum].activate_added_effect()
 
         if game.rival_pkm.health == 0:
             game.rival.team.pop(0)    
